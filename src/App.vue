@@ -1,12 +1,12 @@
+<!-- App.vue -->
 <template>
   <div id="app">
-    <h1>Draggable Box Demo</h1>
-    <DraggableBox />
+    <GameFeed />
   </div>
 </template>
 
 <script setup>
-import DraggableBox from './components/DraggableBox.vue';
+import GameFeed from './components/GameFeed.vue';
 </script>
 
 <style>
