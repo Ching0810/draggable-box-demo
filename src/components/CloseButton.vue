@@ -1,7 +1,6 @@
-<!-- CloseButton.vue -->
 <template>
   <button @click="close" class="close-button">
-    &times;
+    <img src="/X.png" alt="Close" />
   </button>
 </template>
 
@@ -15,20 +14,20 @@ const close = () => {
 
 <style scoped>
 .close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #ff4d4d;
-  color: white;
+  background-color: transparent;
   border: none;
   padding: 0;
-  border-radius: 50%;
+  cursor: pointer;
   width: 30px;
   height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
+}
+
+.close-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>
