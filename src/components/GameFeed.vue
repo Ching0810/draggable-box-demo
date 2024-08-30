@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import VisibilityController from './VisibilityController.vue';
+import VisibilityController from '../components/VisibilityController.vue';
 
 // Ref to the game feed container
 const gameFeed = ref<HTMLDivElement | null>(null);

@@ -15,33 +15,38 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import CloseButton from '../components/CloseButton.vue'; // Import the close button component
-import type { CSSProperties } from 'vue'; // Import CSSProperties type
+import CloseButton from '../components/CloseButton.vue';
+import type { CSSProperties } from 'vue';
 
 const props = defineProps({
-  isVisible: Boolean, // Define a prop for visibility
+  isVisible: Boolean,
   containerSize: {
     type: Object,
     default: () => ({ width: 1000, height: 500 }) // Default container size
   }
 });
 
-const emit = defineEmits(['update:visible']); // Define the event to emit
+const emit = defineEmits(['update:visible']);
 
 const dragging = ref(false);
 const offsetX = ref(0);
 const offsetY = ref(0);
 const boxPosition = ref({ top: 0, left: 0 });
 const isLarge = ref(false);
-const hasMoved = ref(false); // Flag to track if dragging happened
+const hasMoved = ref(false);
 
-const smallSize = { width: 70, height: 140 };
-const largeSize = { width: 150, height: 300 };
+const smallSizePercentage = { width: 8, height: 30 }; // Small size in percentage
+const largeSizePercentage = { width: 15, height: 50 }; // Large size in percentage
+
+const getSizeInPixels = (size: { width: number; height: number }) => ({
+  width: (props.containerSize.width * size.width) / 100,
+  height: (props.containerSize.height * size.height) / 100
+});
 
 const startDrag = (event: MouseEvent) => {
-  event.preventDefault(); // Prevent default browser behavior
+  event.preventDefault();
   dragging.value = true;
-  hasMoved.value = false; // Reset the move flag
+  hasMoved.value = false;
   offsetX.value = event.clientX - boxPosition.value.left;
   offsetY.value = event.clientY - boxPosition.value.top;
 
@@ -50,76 +55,60 @@ const startDrag = (event: MouseEvent) => {
 };
 
 const drag = (event: MouseEvent) => {
-  dragging.value = false
-
-  hasMoved.value = true; // Set the move flag
-
+  hasMoved.value = true;
+  
   const newLeft = event.clientX - offsetX.value;
   const newTop = event.clientY - offsetY.value;
 
-  // Get container dimensions
-  const containerWidth = props.containerSize.width;
-  const containerHeight = props.containerSize.height;
+  const boxSize = getSizeInPixels(isLarge.value ? largeSizePercentage : smallSizePercentage);
 
-  // Determine the current box size based on isLarge
-  const boxSize = isLarge.value ? largeSize : smallSize;
-
-  // Restrict the new position within the container boundaries
-  boxPosition.value.left = Math.min(Math.max(0, newLeft), containerWidth - boxSize.width);
-  boxPosition.value.top = Math.min(Math.max(0, newTop), containerHeight - boxSize.height);
+  boxPosition.value.left = Math.min(Math.max(0, newLeft), props.containerSize.width - boxSize.width);
+  boxPosition.value.top = Math.min(Math.max(0, newTop), props.containerSize.height - boxSize.height);
 };
 
-const stopDrag = (event: MouseEvent) => {
+const stopDrag = () => {
   window.removeEventListener('mousemove', drag);
   window.removeEventListener('mouseup', stopDrag);
-  
+
   setTimeout(() => {
     dragging.value = true;
-  }, 50)
+  }, 50);
 
-  // Prevent click event if dragging occurred
   if (hasMoved.value) {
-    hasMoved.value = false; // Reset the move flag
+    hasMoved.value = false;
   }
 };
 
-let toggleSize = () => {
+const toggleSize = () => {
   if (dragging.value) {
-    // Temporarily store the current size
-    const currentSize = isLarge.value ? largeSize : smallSize;
-    const newSize = isLarge.value ? smallSize : largeSize;
+    const newSize = isLarge.value ? smallSizePercentage : largeSizePercentage;
+    const boxSize = getSizeInPixels(newSize);
 
-    // Calculate new position if toggled to larger size
     let newTop = boxPosition.value.top;
     let newLeft = boxPosition.value.left;
 
-    // Adjust position if the box would exceed the container
-    if (newTop + newSize.height > props.containerSize.height) {
-      newTop = props.containerSize.height - newSize.height;
+    if (newTop + boxSize.height > props.containerSize.height) {
+      newTop = props.containerSize.height - boxSize.height;
     }
-    if (newLeft + newSize.width > props.containerSize.width) {
-      newLeft = props.containerSize.width - newSize.width;
+    if (newLeft + boxSize.width > props.containerSize.width) {
+      newLeft = props.containerSize.width - boxSize.width;
     }
 
-    // Ensure position doesn't go negative
     newTop = Math.max(newTop, 0);
     newLeft = Math.max(newLeft, 0);
 
     boxPosition.value = { top: newTop, left: newLeft };
 
-    // Toggle the size
     isLarge.value = !isLarge.value;
-  } else if (!dragging.value) {
-    return;
   }
 };
 
 const handleClose = () => {
-  emit('update:visible', false); // Emit event to update visibility
+  emit('update:visible', false);
 };
 
 const boxStyle = computed((): CSSProperties => {
-  const boxSize = isLarge.value ? largeSize : smallSize;
+  const boxSize = getSizeInPixels(isLarge.value ? largeSizePercentage : smallSizePercentage);
   return {
     top: `${boxPosition.value.top}px`,
     left: `${boxPosition.value.left}px`,
@@ -132,9 +121,7 @@ const boxStyle = computed((): CSSProperties => {
 });
 
 const buttonImage = computed(() => {
-  return isLarge.value
-    ? '/shrink.png'
-    : '/enlarge.png';
+  return isLarge.value ? '/shrink.png' : '/enlarge.png';
 });
 
 watch(() => props.isVisible, (newVal) => {
@@ -150,24 +137,19 @@ watch(() => props.isVisible, (newVal) => {
 }
 .close-button-position {
   position: absolute;
-  top: -15px; /* Half of the button height */
-  right: -15px; /* Half of the button width */
+  top: -15px; /* Adjust based on button size */
+  right: -15px;
 }
 .toggle-button {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  background: none;
-  border: none;
-  padding: 0;
   cursor: pointer;
-  line-height: 0;
   margin-bottom: 5px;
 }
 .toggle-button img {
   width: 40px;
   height: 40px;
-  object-fit: cover;
 }
 </style>
